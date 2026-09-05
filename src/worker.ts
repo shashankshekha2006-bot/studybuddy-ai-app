@@ -21,6 +21,7 @@ export default {
     if (url.pathname.startsWith('/api')) {
       if (env?.GEMINI_API_KEY) {
         process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
+        (globalThis as any).__GEMINI_API_KEY = env.GEMINI_API_KEY;
       }
       if (nodeHandler.fetch) {
         return nodeHandler.fetch(request as any, env as any, ctx as any);

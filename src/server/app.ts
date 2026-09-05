@@ -39,7 +39,7 @@ function rateLimiter(req: Request, res: Response, next: NextFunction) {
 
 // Initialize Gemini client with mandatory User-Agent header
 export function getGeminiClient(customApiKey?: string): GoogleGenAI | null {
-  const apiKey = customApiKey || process.env.GEMINI_API_KEY;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || (globalThis as any).__GEMINI_API_KEY;
   if (!apiKey) {
     return null;
   }
@@ -90,9 +90,10 @@ async function generateWithFallback(ai: GoogleGenAI, params: { prompt: string; s
 
 // 1. Health check route
 app.get('/api/health', (_req: Request, res: Response) => {
+  const hasApiKey = Boolean(process.env.GEMINI_API_KEY || (globalThis as any).__GEMINI_API_KEY);
   res.json({
     status: 'ok',
-    hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    hasApiKey,
     runtime: typeof (globalThis as any).WebSocketPair !== 'undefined' ? 'cloudflare-worker' : 'node',
     timestamp: new Date().toISOString(),
   });
