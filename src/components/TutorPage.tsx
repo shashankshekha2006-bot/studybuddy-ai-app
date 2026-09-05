@@ -78,11 +78,11 @@ export const TutorPage: React.FC<TutorPageProps> = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data: any = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Server returned an error. Please try again.');
       }
 
-      const data = await res.json();
+      const data: any = await res.json();
       const newAnswer: AIAnswer = {
         id: `ans_${Date.now()}`,
         question: trimmed,

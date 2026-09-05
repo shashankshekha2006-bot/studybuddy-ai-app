@@ -90,7 +90,7 @@ export const QuizPage: React.FC<QuizPageProps> = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data: any = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to generate quiz. Please try again.');
       }
 
@@ -264,7 +264,7 @@ export const QuizPage: React.FC<QuizPageProps> = ({
                     if (!res.ok) throw new Error('Failed to generate quick quiz');
                     return res.json();
                   })
-                  .then((data) => {
+                  .then((data: any) => {
                     if (!data.questions || data.questions.length === 0) {
                       throw new Error('No quiz questions returned');
                     }

@@ -60,7 +60,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({ settings, onOpenSettings }
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data: any = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to generate notes. Please try again.');
       }
 
