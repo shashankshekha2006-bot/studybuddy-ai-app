@@ -1,0 +1,6 @@
+{
+  "name": "StudyBuddy AI",
+  "description": "Mobile-first AI Study Assistant for Indian students (Class 5-12) supporting Hindi & English with step-by-step solutions, quizzes, and revision notes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
