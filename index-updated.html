@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Password Generator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{min-height:100vh;background:linear-gradient(135deg,#111827,#1e1b4b);color:#fff;padding:18px}
+.app{max-width:520px;margin:auto}.header{text-align:center;padding:16px 0 20px}.header h1{font-size:27px;margin-bottom:7px}.header p,.hint,.rules{color:#b9bccb;font-size:13px}
+.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;margin-bottom:14px;backdrop-filter:blur(12px)}
+label.title{display:block;font-weight:bold;margin-bottom:9px}
+select,input[type=number]{width:100%;padding:13px;border-radius:12px;border:1px solid #44495c;background:#101522;color:#fff;font-size:15px}
+.password-box{background:#090d18;border-radius:14px;padding:16px;display:flex;gap:9px;align-items:center;margin-top:12px}
+#password{flex:1;word-break:break-all;font-size:18px;font-weight:bold}.icon-btn,.main{border:0;color:#fff;cursor:pointer;border-radius:11px}
+.icon-btn{background:#292e40;padding:11px}.buttons{display:flex;gap:9px;margin-top:12px}.main{flex:1;padding:13px;background:#6366f1;font-weight:bold}
+.copy-message{text-align:center;color:#5eead4;min-height:18px;font-size:13px;margin-top:8px}
+.label-row,.strength-title{display:flex;justify-content:space-between;margin-bottom:9px;font-weight:bold}
+input[type=range]{width:100%;accent-color:#6366f1}
+.option{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.option:last-child{border:0}.switch{position:relative;width:48px;height:27px}.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#3b3f4d;border-radius:30px;cursor:pointer}.slider:before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:#6366f1}input:checked+.slider:before{transform:translateX(21px)}
+.progress{height:9px;background:#292d3b;border-radius:10px;overflow:hidden}.bar{height:100%;width:0%;background:#34d399;transition:.25s}
+.rulebox{line-height:1.55;margin-top:10px}.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#272b3a;font-size:11px;margin:2px}
+.hidden{display:none}.footer{text-align:center;color:#777b8b;font-size:11px;margin:20px}
+body.light{background:linear-gradient(135deg,#eef2ff,#f8fafc);color:#111827}
+body.light .card{background:rgba(255,255,255,.78);border-color:#dbe1ea}
+body.light .password-box,body.light select,body.light input[type=number]{background:#fff;color:#111827;border-color:#d1d5db}
+body.light .hint,body.light .rules,body.light .header p{color:#5b6474}
+body.light .option{border-bottom-color:#e5e7eb}
+body.light .slider{background:#cbd5e1}
+.top-actions{display:flex;gap:8px;margin-bottom:12px}
+.small-btn{flex:1;padding:11px;border:1px solid #4b5163;background:#202638;color:#fff;border-radius:11px;font-weight:bold;cursor:pointer}
+body.light .small-btn{background:#fff;color:#111827;border-color:#d1d5db}
+.history-item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.history-item:last-child{border:0}.history-pass{word-break:break-all;font-family:monospace;font-size:13px}.empty{color:#9ca3af;font-size:13px}
+.footer{text-align:center;color:#777b8b;font-size:11px;margin:20px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+<h1>🔐 Universal Password Generator</h1>
+<p>Website/App ke rules ke according password generate karein</p>
+</div>
+
+<div class="top-actions">
+  <button class="small-btn" onclick="toggleTheme()">🌙 Theme</button>
+  <button class="small-btn" onclick="toggleHistory()">🕘 History</button>
+</div>
+
+<div id="historyCard" class="card hidden">
+  <div class="label-row"><span>Password History</span><button class="small-btn" style="flex:0 0 auto;padding:7px 10px" onclick="clearHistory()">Clear</button></div>
+  <div id="historyList"></div>
+</div>
+
+<div class="card">
+<label class="title" for="service">Website / App</label>
+<select id="service" onchange="applyService()"></select>
+<p class="hint" id="serviceHint" style="margin-top:8px"></p>
+</div>
+
+<div class="card">
+<div class="password-box"><div id="password">Generating...</div><button class="icon-btn" onclick="copyPassword()">📋</button></div>
+<div id="copyMessage" class="copy-message"></div>
+<div class="buttons"><button class="main" onclick="generatePassword()">🔄 Regenerate</button><button class="main" onclick="copyPassword()">📋 Copy</button></div>
+</div>
+
+<div class="card">
+<div class="label-row"><span>Password Length</span><span id="lengthValue">16</span></div>
+<input type="range" id="length" min="4" max="64" value="16" oninput="updateLength()">
+<div style="height:8px"></div>
+<div class="option"><span>Lowercase (a-z)</span><label class="switch"><input type="checkbox" id="lower" checked onchange="manualChange()"><span class="slider"></span></label></div>
+<div class="option"><span>Uppercase (A-Z)</span><label class="switch"><input type="checkbox" id="upper" checked onchange="manualChange()"><span class="slider"></span></label></div>
+<div class="option"><span>Numbers (0-9)</span><label class="switch"><input type="checkbox" id="numbers" checked onchange="manualChange()"><span class="slider"></span></label></div>
+<div class="option"><span>Symbols</span><label class="switch"><input type="checkbox" id="symbols" checked onchange="manualChange()"><span class="slider"></span></label></div>
+</div>
+
+<div class="card">
+<div class="strength-title"><span>Strength</span><span id="strengthText">Strong</span></div>
+<div class="progress"><div class="bar" id="strengthBar"></div></div>
+<div class="rulebox" id="rules"></div>
+</div>
+
+<div class="card">
+<label class="title">Custom Rules</label>
+<p class="hint">Unsupported website/app ke liye custom rules set karein.</p>
+<div class="option"><span>Minimum length</span><input id="customMin" type="number" min="4" max="64" value="12" style="width:95px" onchange="applyCustom()"></div>
+<div class="option"><span>Maximum length</span><input id="customMax" type="number" min="4" max="64" value="32" style="width:95px" onchange="applyCustom()"></div>
+<div class="option"><span>At least one number</span><label class="switch"><input type="checkbox" id="customNum" checked onchange="applyCustom()"><span class="slider"></span></label></div>
+<div class="option"><span>At least one symbol</span><label class="switch"><input type="checkbox" id="customSym" checked onchange="applyCustom()"><span class="slider"></span></label></div>
+</div>
+
+<div class="footer">Passwords are generated locally using the browser crypto API. No password is uploaded.</div>
+</div>
+
+<script>
+const LOWER="abcdefghijklmnopqrstuvwxyz", UPPER="ABCDEFGHIJKLMNOPQRSTUVWXYZ", NUM="0123456789", SYM="!@#$%^&*_-+=?";
+const services={
+"Custom / Any Website":{min:12,max:32,lower:true,upper:true,num:true,sym:true,note:"Use this for any service when you know its exact password requirements."},
+"Google / Gmail":{min:12,max:100,lower:true,upper:true,num:true,sym:true,note:"Google account passwords accept letters, numbers and common symbols. Exact limits can change; verify on signup."},
+"Microsoft / Outlook":{min:12,max:127,lower:true,upper:true,num:true,sym:true,note:"Microsoft account password requirements can vary by account flow."},
+"Apple ID / iCloud":{min:8,max:100,lower:true,upper:true,num:true,sym:true,note:"Apple requires strong passwords; service-side rules may vary."},
+"Facebook":{min:6,max:64,lower:true,upper:true,num:true,sym:true,note:"Facebook's minimum length is commonly lower than this generator's default strong-password target."},
+"Instagram":{min:6,max:64,lower:true,upper:true,num:true,sym:true,note:"Instagram password requirements can vary; common characters are supported."},
+"X / Twitter":{min:8,max:128,lower:true,upper:true,num:true,sym:true,note:"Use a unique password; exact rules may change."},
+"GitHub":{min:8,max:72,lower:true,upper:true,num:true,sym:true,note:"GitHub account password rules may include additional security requirements."},
+"Amazon":{min:6,max:128,lower:true,upper:true,num:true,sym:true,note:"Amazon accepts a broad password character set; exact limits can change."},
+"Netflix":{min:6,max:60,lower:true,upper:true,num:true,sym:true,note:"Netflix account password rules may change."},
+"LinkedIn":{min:6,max:200,lower:true,upper:true,num:true,sym:true,note:"LinkedIn accepts strong mixed-character passwords."},
+"Discord":{min:8,max:72,lower:true,upper:true,num:true,sym:true,note:"Discord may enforce additional security checks."},
+"Reddit":{min:8,max:72,lower:true,upper:true,num:true,sym:true,note:"Reddit password rules can change."},
+"Spotify":{min:10,max:128,lower:true,upper:true,num:true,sym:true,note:"Spotify may impose additional account-security checks."},
+"Telegram":{min:1,max:128,lower:true,upper:true,num:true,sym:true,note:"This preset is for an app passcode; Telegram account/password flows differ."},
+"Dropbox":{min:6,max:64,lower:true,upper:true,num:true,sym:true,note:"Dropbox requirements can change."},
+"PayPal":{min:8,max:20,lower:true,upper:true,num:true,sym:true,note:"Financial services may impose strict current rules; verify the signup/reset screen."},
+"Canva":{min:8,max:128,lower:true,upper:true,num:true,sym:true,note:"Canva requirements can change."},
+"Slack":{min:8,max:128,lower:true,upper:true,num:true,sym:true,note:"Workspace administrators may impose additional rules."},
+"Zoom":{min:8,max:64,lower:true,upper:true,num:true,sym:true,note:"Zoom account rules can change."},
+"Steam":{min:8,max:64,lower:true,upper:true,num:true,sym:true,note:"Steam password requirements can change."}
+};
+const select=document.getElementById("service");
+Object.keys(services).forEach(x=>{let o=document.createElement("option");o.value=x;o.textContent=x;select.appendChild(o)});
+let current=services["Custom / Any Website"], manual=false;
+
+function rand(n){let a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function rc(s){return s[rand(s.length)]}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+
+
+
+let passwordHistory = JSON.parse(localStorage.getItem("passwordHistory") || "[]");
+
+function saveHistory(password) {
+  if (!password || password === "Generating..." || password.includes("Select")) return;
+  const item = { password, service: select.value, time: new Date().toLocaleString() };
+  passwordHistory = [item, ...passwordHistory.filter(x => x.password !== password)].slice(0, 10);
+  localStorage.setItem("passwordHistory", JSON.stringify(passwordHistory));
+  renderHistory();
+}
+
+function renderHistory() {
+  const box = document.getElementById("historyList");
+  if (!passwordHistory.length) {
+    box.innerHTML = '<div class="empty">Abhi history empty hai.</div>';
+    return;
+  }
+  box.innerHTML = passwordHistory.map((x, i) => `
+    <div class="history-item">
+      <div>
+        <div class="history-pass">${escapeHtml(x.password)}</div>
+        <div class="hint">${escapeHtml(x.service)} • ${escapeHtml(x.time)}</div>
+      </div>
+      <button class="icon-btn" onclick="copyHistory(${i})">📋</button>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(v) {
+  return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+async function copyHistory(i) {
+  const p = passwordHistory[i]?.password;
+  if (!p) return;
+  try { await navigator.clipboard.writeText(p); } catch(e) {
+    const t=document.createElement("textarea"); t.value=p; document.body.appendChild(t); t.select();
+    document.execCommand("copy"); t.remove();
+  }
+  document.getElementById("copyMessage").textContent="History password copied ✓";
+  setTimeout(()=>document.getElementById("copyMessage").textContent="",1800);
+}
+
+function clearHistory() {
+  passwordHistory = [];
+  localStorage.removeItem("passwordHistory");
+  renderHistory();
+}
+
+function toggleHistory() {
+  document.getElementById("historyCard").classList.toggle("hidden");
+  renderHistory();
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+
+function applyService(){
+manual=false; current=services[select.value];
+let len=Math.max(current.min,Math.min(16,current.max));
+document.getElementById("length").min=current.min;
+document.getElementById("length").max=current.max;
+document.getElementById("length").value=len;
+document.getElementById("lengthValue").textContent=len;
+setChecks(current);
+document.getElementById("serviceHint").textContent=current.note;
+renderRules();
+generatePassword();
+}
+function setChecks(r){
+document.getElementById("lower").checked=r.lower;
+document.getElementById("upper").checked=r.upper;
+document.getElementById("numbers").checked=r.num;
+document.getElementById("symbols").checked=r.sym;
+}
+function updateLength(){document.getElementById("lengthValue").textContent=document.getElementById("length").value;generatePassword()}
+function manualChange(){manual=true;generatePassword();renderRules()}
+function generatePassword(){
+let len=+document.getElementById("length").value;
+let pools=[];
+if(document.getElementById("lower").checked)pools.push(LOWER);
+if(document.getElementById("upper").checked)pools.push(UPPER);
+if(document.getElementById("numbers").checked)pools.push(NUM);
+if(document.getElementById("symbols").checked)pools.push(SYM);
+if(!pools.length){document.getElementById("password").textContent="Select at least one type";return}
+if(len<pools.length){len=pools.length;document.getElementById("length").value=len;document.getElementById("lengthValue").textContent=len}
+let out=pools.map(rc);
+let all=pools.join("");
+while(out.length<len)out.push(rc(all));
+document.getElementById("password").textContent=shuffle(out).join("");
+strength(len,pools.length);
+document.getElementById("copyMessage").textContent="";
+  saveHistory(document.getElementById("password").textContent);
+}
+function strength(len,c){
+let s=Math.min(100,(len>=12?30:10)+(len>=16?20:0)+(len>=20?15:0)+c*8);
+document.getElementById("strengthBar").style.width=s+"%";
+document.getElementById("strengthText").textContent=s<40?"Weak":s<70?"Medium":"Strong";
+}
+function renderRules(){
+let r=current;
+document.getElementById("rules").innerHTML=
+"<b>Applied rules:</b><br>"+
+`<span class="badge">Min ${r.min}</span><span class="badge">Max ${r.max}</span>`+
+(r.lower?'<span class="badge">a-z</span>':'')+
+(r.upper?'<span class="badge">A-Z</span>':'')+
+(r.num?'<span class="badge">0-9</span>':'')+
+(r.sym?'<span class="badge">symbols</span>':'');
+}
+function applyCustom(){
+let min=Math.max(4,Math.min(64,+document.getElementById("customMin").value||12));
+let max=Math.max(min,Math.min(64,+document.getElementById("customMax").value||32));
+document.getElementById("customMin").value=min;document.getElementById("customMax").value=max;
+current={min,max,lower:true,upper:true,num:document.getElementById("customNum").checked,sym:document.getElementById("customSym").checked,note:"Custom rules active."};
+select.value="Custom / Any Website";manual=true;
+document.getElementById("length").min=min;document.getElementById("length").max=max;
+let l=Math.max(min,Math.min(+document.getElementById("length").value,max));
+document.getElementById("length").value=l;document.getElementById("lengthValue").textContent=l;
+document.getElementById("numbers").checked=current.num;document.getElementById("symbols").checked=current.sym;
+document.getElementById("serviceHint").textContent=current.note;renderRules();generatePassword();
+}
+async function copyPassword(){
+let p=document.getElementById("password").textContent;if(!p||p.includes("Select"))return;
+try{await navigator.clipboard.writeText(p)}catch(e){let t=document.createElement("textarea");t.value=p;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()}
+document.getElementById("copyMessage").textContent="Password copied ✓";setTimeout(()=>document.getElementById("copyMessage").textContent="",1800)
+}
+applyService();
+</script>
+</body>
+</html>
